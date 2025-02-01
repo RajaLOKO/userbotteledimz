@@ -65,7 +65,7 @@ async def main():
 def is_device_owner(sender_id):
     return sender_id == device_owner_id
 
-@client.on(events.NewMessage(pattern='/autoname', outgoing=True))
+@client.on(events.NewMessage(pattern='.autoname', outgoing=True))
 async def autoname(event):
     if event.fwd_from:
         return
@@ -81,7 +81,7 @@ async def autoname(event):
             await asyncio.sleep(ex.seconds)
         await asyncio.sleep(DEL_TIME_OUT)
 
-@client.on(events.NewMessage(pattern='/autobio', outgoing=True))
+@client.on(events.NewMessage(pattern='.autobio', outgoing=True))
 async def autobio(event):
     if event.fwd_from:
         return
@@ -103,23 +103,23 @@ async def autobio(event):
         
         await asyncio.sleep(DEL_TIME_OUT)
     
-@client.on(events.NewMessage(pattern='/p', outgoing=True))
+@client.on(events.NewMessage(pattern='.gcast', outgoing=True))
 async def promote(event):
     sender = await event.get_sender()
     if not is_device_owner(sender.id):
-        await event.respond(append_watermark_to_message("❌ Anda tidak berwenang untuk menggunakan perintah ini."))
+        await event.respond(append_watermark_to_message("```❌ Anda tidak berwenang untuk menggunakan perintah ini.```"))
         print("Unauthorized access attempt blocked.")
         return
 
     reply_message = await event.get_reply_message()
     if not reply_message:
-        await event.respond(append_watermark_to_message("❌ Silakan membalas pesan, gambar, atau video untuk digunakan sebagai konten jaseb"))
+        await event.respond(append_watermark_to_message("```❌ Silakan membalas pesan, gambar, atau video untuk digunakan sebagai konten jaseb```"))
         return
     
     sent_count = 0
     failed_count = 0
     delay = 1 # Set your desired delay time in seconds
-    status_message = await event.respond(append_watermark_to_message("🔎 Memulai Jaseb..."))
+    status_message = await event.respond(append_watermark_to_message("```🔎 Memulai Jaseb...```"))
 
     groups = [dialog for dialog in await client.get_dialogs() if dialog.is_group]
     total_groups = len(groups)
@@ -137,63 +137,63 @@ async def promote(event):
             else:
                 message_with_watermark = append_watermark_to_message(reply_message.message)
                 await client.send_message(dialog.id, message_with_watermark, parse_mode='html')
-                print("Berhasil Mengirim Jaseb Ke Grup!")
+                print("```Berhasil Mengirim Jaseb Ke Grup!```")
             sent_count += 1
-            progress = (sent_count / total_groups) * 100
+            progress = (sent_count / total_groups) * 200
             
             for remaining_time in range(delay, 0, -1):
                 loading_animation = "".join([symbol for symbol in loading_symbols[:sent_count % len(loading_symbols) + 1]])
-                await status_message.edit(append_watermark_to_message(f"🔎 Mengirim jaseb ke grup{loading_animation} {progress:.2f}%\n\n✔️ Terkirim: {sent_count}\n❌ Gagal: {failed_count}\n⏭ Grup selanjutnya {remaining_time} detik lagi..."))
+                await status_message.edit(append_watermark_to_message(f"```🔎 Mengirim jaseb ke grup{loading_animation} {progress:.2f}%\n\n✔️ Terkirim: {sent_count}\n❌ Gagal: {failed_count}\n⏭ Grup selanjutnya {remaining_time} detik lagi...```"))
                 await asyncio.sleep(1)
         except Exception as e:
             failed_count += 1
             print(f"Failed to send to {dialog.title}: {e}")
     
-    await status_message.edit(append_watermark_to_message(f"✅ Selesai mengirim jaseb ke semua grup!\n\nTotal grup terkirim: {sent_count}\nTotal grup yang gagal: {failed_count}"))
+    await status_message.edit(append_watermark_to_message(f"```✅ Selesai mengirim jaseb ke semua grup!\n\nTotal grup terkirim: {sent_count}\nTotal grup yang gagal: {failed_count}```"))
 
-@client.on(events.NewMessage(pattern='/blacklist', outgoing=True))
+@client.on(events.NewMessage(pattern='.addbl', outgoing=True))
 async def blacklist_group(event):
     sender = await event.get_sender()
     if not is_device_owner(sender.id):
-        await event.respond(append_watermark_to_message("❌ Anda tidak berwenang untuk menggunakan perintah ini."))
+        await event.respond(append_watermark_to_message("```❌ Anda tidak berwenang untuk menggunakan perintah ini.```"))
         print("Unauthorized access attempt blocked.")
         return
 
     group_id = event.chat_id
     if group_id not in blacklisted_groups:
         blacklisted_groups.append(group_id)
-        await event.respond(append_watermark_to_message("🚫 Grup telah berhasil masuk daftar hitam."))
+        await event.respond(append_watermark_to_message("```🚫 Grup telah berhasil masuk daftar hitam.```"))
     else:
-        await event.respond(append_watermark_to_message("🚫 Grup ini sudah masuk daftar hitam."))
+        await event.respond(append_watermark_to_message("```🚫 Grup ini sudah masuk daftar hitam.```"))
 
-@client.on(events.NewMessage(pattern='/addqr', outgoing=True))
+@client.on(events.NewMessage(pattern='.addqr', outgoing=True))
 async def add_qr(event):
     sender = await event.get_sender()
     if not is_device_owner(sender.id):
-        await event.respond(append_watermark_to_message("❌ Anda tidak berwenang untuk menggunakan perintah ini."))
+        await event.respond(append_watermark_to_message("```❌ Anda tidak berwenang untuk menggunakan perintah ini.```"))
         print("Unauthorized access attempt blocked.")
         return
 
     reply_message = await event.get_reply_message()
     if not reply_message or not reply_message.media:
-        await event.respond(append_watermark_to_message("❌ Harap balas gambar kode QR untuk menggunakan perintah ini."))
+        await event.respond(append_watermark_to_message("```❌ Harap balas gambar kode QR untuk menggunakan perintah ini.```"))
         return
 
     try:
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         file_path = os.path.join(QR_CODE_DIR, f"qr_{timestamp}.jpg")
         await client.download_media(reply_message.media, file_path)
-        await event.respond(append_watermark_to_message("✅ QR Code berhasil ditambahkan!"))
+        await event.respond(append_watermark_to_message("```✅ QR Code berhasil ditambahkan!```"))
         print(f"QR code added with timestamp: {timestamp}")
     except Exception as e:
-        await event.respond(append_watermark_to_message("❌ Gagal menambahkan QR Code."))
+        await event.respond(append_watermark_to_message("```❌ Gagal menambahkan QR Code.```"))
         print(f"Error: {e}")
 
-@client.on(events.NewMessage(pattern='/getqr', outgoing=True))
+@client.on(events.NewMessage(pattern='.getqr', outgoing=True))
 async def get_qr(event):
     qr_files = sorted(os.listdir(QR_CODE_DIR))
     if not qr_files:
-        await event.respond(append_watermark_to_message("❌ Tidak ada Qr Code yang tersedia."))
+        await event.respond(append_watermark_to_message("```❌ Tidak ada Qr Code yang tersedia.```"))
         return
 
     try:
@@ -202,11 +202,11 @@ async def get_qr(event):
             await client.send_file(event.chat_id, file_path, caption=append_watermark_to_message(f"🖼 QR Code: {qr_file}"))
             await asyncio.sleep(1)  # Optional delay to avoid spamming
     except Exception as e:
-        await event.respond(append_watermark_to_message("❌ Gagal menambahkan QR Code."))
+        await event.respond(append_watermark_to_message("```❌ Gagal menambahkan QR Code.```"))
         print(f"Error sending QR code: {e}")
 
 handled_user = set()
-@client.on(events.NewMessage(pattern='/afk', outgoing=True))
+@client.on(events.NewMessage(pattern='.afk', outgoing=True))
 async def afk(event):
     global afk_reason
     afk_reason = event.message.message[len('/afk '):].strip()
@@ -227,32 +227,32 @@ async def handle_incoming(event):
         handled_user.add(anu)
         await event.reply(append_watermark_to_message(f"{afk_reason}"))
 
-@client.on(events.NewMessage(pattern='/back', outgoing=True))
+@client.on(events.NewMessage(pattern='.back', outgoing=True))
 async def back(event):
     global afk_reason
     afk_reason = None
     handled_users.clear()
-    await event.respond(append_watermark_to_message("👋 Halo Aku On Kembali"))
+    await event.respond(append_watermark_to_message("```👋 Halo Aku Idoy Kembali```"))
     print("AFK mode disabled.")
 
-@client.on(events.NewMessage(pattern='/help', outgoing=True))
+@client.on(events.NewMessage(pattern='.help', outgoing=True))
 async def show_help(event):
     help_text = (
         "🛠 **Perintah yang Tersedia:**\n"
-        "/p - Promosikan pesan ke semua grup.\n"
-        "/blacklist - Daftar hitamkan grup saat ini agar tidak menerima promosi.\n"
-        "/addqr - Tambahkan kode QR (kirim gambar sebagai balasan atas perintah ini).\n"
-        "/getqr - Ambil semua kode QR yang disimpan.\n"
-        "/afk <alasan> - Tetapkan pesan AFK dengan alasannya.\n"
-        "/back - Nonaktifkan mode AFK.\n"
-        "/ping - Periksa waktu respons bot.\n"
-        "/autoname - Untuk waktu otomatis dan nama di telegram\n"
-        "/autobio - Untuk waktu otomatis dan bio di telegram\n"
+        ".gcast - Promosikan pesan ke semua grup.\n"
+        ".addbl - Daftar hitamkan grup saat ini agar tidak menerima promosi.\n"
+        ".addqr - Tambahkan kode QR (kirim gambar sebagai balasan atas perintah ini).\n"
+        ".getqr - Ambil semua kode QR yang disimpan.\n"
+        ".afk <alasan> - Tetapkan pesan AFK dengan alasannya.\n"
+        ".back - Nonaktifkan mode AFK.\n"
+        ".ping - Periksa waktu respons bot.\n"
+        ".autoname - Untuk waktu otomatis dan nama di telegram\n"
+        ".autobio - Untuk waktu otomatis dan bio di telegram\n"
         f"\n{WATERMARK_TEXT}"
     )
     await event.respond(help_text)
 
-@client.on(events.NewMessage(pattern='/ping', outgoing=True))
+@client.on(events.NewMessage(pattern='.ping', outgoing=True))
 async def ping(event):
     start = datetime.now()
     await event.respond(append_watermark_to_message("🏓 Pong!"))
